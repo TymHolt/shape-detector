@@ -31,15 +31,18 @@ class BackgroundDetection:
         contours, _ = cv2.findContours(frame_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
         background_contour = None
+        background_area = -1
         for contour in contours:
+            # Search biggest area
             area = cv2.contourArea(contour)
-            if area < 1000: # TODO Minimum area for background selection, make configurable?? Dynamic??
+            if area < background_area:
                 continue
 
             peri = cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, 0.03 * peri, True)        
             if len(approx) == 4:
                 background_contour = approx
+                background_area = area
                 break
 
         # Background detected, render contours
