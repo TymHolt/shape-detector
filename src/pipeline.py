@@ -11,4 +11,4 @@ class DetectionPipeline:
         resize_ratio = self.frame_size / frame.shape[0]
         frame_resized = cv2.resize(frame, None, fx=resize_ratio, fy=resize_ratio)
 
-        return self.background_detection.mask_background(frame_resized)
+        return self.background_detection.mask_background(frame_resized).mask
