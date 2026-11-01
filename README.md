@@ -15,8 +15,18 @@ The following dependencies were used during development:
 
 ## Run
 If the setup was done correct, you can use ```run.sh``` to execute the application form the root directory. For manual
-execution (without a virtual environment), use
+execution (without a virtual environment), use ```src/main.py``` as the execution file:
 
-> python src/main.py
+```bash
+# Run with script
+bash run.sh
 
-The application can be terminated by pressing ```q``` int he opened window(s).
+# Run manually
+python src/main.py
+```
+
+#### Controls
+
+- ```Q``` -- Quit application
+- ```A``` -- Go backwards in stage selection
+- ```D``` -- Go forward in stage selection

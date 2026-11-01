@@ -15,17 +15,22 @@ class BackgroundDetection:
     def mask_background(self, pipeline, frame):
         # Edge detection works best with grayscale
         frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        pipeline.add_stage("Background Grayscale", frame_grayscale)
 
         # Blurr, smooth out details and noise
         frame_blurred = cv2.GaussianBlur(frame_grayscale, (self.blurr_size, self.blurr_size), 0)
+        pipeline.add_stage("Background Blurred", frame_blurred)
 
         # Filter edges with given threshold
         frame_edges = cv2.Canny(frame_blurred, self.canny_low, self.canny_high)
+        pipeline.add_stage("Background Canny", frame_edges)
 
         # Close edge gaps and corrections
         kernel = np.ones((5, 5), np.uint8)
         frame_edges = cv2.dilate(frame_edges, kernel, iterations=2)
+        pipeline.add_stage("Background Dilate", frame_edges)
         frame_edges = cv2.erode(frame_edges, kernel, iterations=1)
+        pipeline.add_stage("Background Erode", frame_edges)
 
         # Find contours
         contours, _ = cv2.findContours(frame_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

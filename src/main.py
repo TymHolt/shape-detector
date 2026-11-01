@@ -21,9 +21,9 @@ def main():
         key = cv2.waitKey(10)
 
         if key == ord("a"):
-            detection_pipeline.move_selector(1)
-        elif key == ord("d"):
             detection_pipeline.move_selector(-1)
+        elif key == ord("d"):
+            detection_pipeline.move_selector(1)
         elif key == ord("q"):
             break
 
