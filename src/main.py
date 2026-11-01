@@ -18,7 +18,13 @@ def main():
 
         cv2.imshow("Camera Feed", detection_pipeline.handle_frame(frame))
 
-        if cv2.waitKey(10) == ord("q"):
+        key = cv2.waitKey(10)
+
+        if key == ord("a"):
+            detection_pipeline.move_selector(1)
+        elif key == ord("d"):
+            detection_pipeline.move_selector(-1)
+        elif key == ord("q"):
             break
 
     capture.release()

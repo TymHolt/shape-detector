@@ -12,7 +12,7 @@ class BackgroundDetection:
         self.canny_low = canny_low
         self.canny_high = canny_high
 
-    def mask_background(self, frame):
+    def mask_background(self, pipeline, frame):
         # Edge detection works best with grayscale
         frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
