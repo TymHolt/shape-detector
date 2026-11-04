@@ -50,10 +50,4 @@ class BackgroundDetection:
                 background_area = area
                 break
 
-        # Background detected, render contours
-        if background_contour is not None:
-            cv2.drawContours(frame, [background_contour], -1, (0, 255, 0), 2)
-            for point in background_contour:
-                cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
-
         return Background(frame, background_contour)

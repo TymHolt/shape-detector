@@ -18,7 +18,13 @@ class DetectionPipeline:
         self.add_stage("Camera Input Resized", frame_resized)
 
         # Mask the background
-        self.background_detection.mask_background(self, frame_resized)
+        background = self.background_detection.mask_background(self, frame_resized)
+
+        # Other detections
+        # ...
+
+        # Draw detected contours
+        self.render_contour(frame_resized, background.contour)
 
         # Get selected stage, clamp index for safety
         self.stage_selector = max(0, min(self.stage_selector, len(self.stage_buffer) - 1))
@@ -36,3 +42,9 @@ class DetectionPipeline:
 
     def add_stage(self, title, frame):
         self.stage_buffer.append((title, frame));
+
+    def render_contour(self, frame, contour):
+        if contour is not None:
+            cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2)
+            for point in contour:
+                cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
