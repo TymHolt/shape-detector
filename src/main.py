@@ -18,7 +18,7 @@ def main():
 
         cv2.imshow("Camera Feed", detection_pipeline.handle_frame(frame))
 
-        key = cv2.waitKey(10)
+        key = cv2.waitKeyEx(10)
 
         if key == ord("a"):
             detection_pipeline.move_selector(-1)
@@ -26,6 +26,8 @@ def main():
             detection_pipeline.move_selector(1)
         elif key == ord("q"):
             break
+        elif key == ord("\t"):
+            detection_pipeline.ui_render_flag = not detection_pipeline.ui_render_flag
 
     capture.release()
     cv2.destroyAllWindows()

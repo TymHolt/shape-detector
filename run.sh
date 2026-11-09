@@ -1,7 +1,3 @@
 #!/bin/bash
 
-source .venv/bin/activate
-
-python src/main.py
-
-deactivate
+.venv/bin/python src/main.py

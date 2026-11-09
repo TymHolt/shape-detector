@@ -7,6 +7,7 @@ class DetectionPipeline:
         self.background_detection = BackgroundDetection()
         self.stage_selector = 0
         self.stage_buffer = []
+        self.ui_render_flag = False
 
     def handle_frame(self, frame):
         self.stage_buffer = []
@@ -34,7 +35,9 @@ class DetectionPipeline:
         output = stage_frame.copy()
         if len(output.shape) == 2 or output.shape[2] == 1:
             output = cv2.cvtColor(output, cv2.COLOR_GRAY2BGR)
-        cv2.putText(output, title, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+
+        if self.ui_render_flag:
+            self.render_ui(title, output)
         return output
 
     def move_selector(self, direction):
@@ -48,3 +51,6 @@ class DetectionPipeline:
             cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2)
             for point in contour:
                 cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
+
+    def render_ui(self, title, output):
+        cv2.putText(output, title, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
