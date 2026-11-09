@@ -28,5 +28,8 @@ python src/main.py
 #### Controls
 
 - ```Q``` -- Quit application
+- ```W``` -- Go backwards in section selection
+- ```S``` -- Go forward in section selection
 - ```A``` -- Go backwards in stage selection
 - ```D``` -- Go forward in stage selection
+- ```Tab``` -- Toggle UI
