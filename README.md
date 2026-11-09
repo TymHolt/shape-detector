@@ -33,3 +33,5 @@ python src/main.py
 - ```A``` -- Go backwards in stage selection
 - ```D``` -- Go forward in stage selection
 - ```Tab``` -- Toggle UI
+- ```0-9``` -- Switch camera index
+
