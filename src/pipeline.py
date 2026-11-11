@@ -1,5 +1,6 @@
 import cv2
 from background import *
+from objects import *
 
 class PipelineSection:
     def __init__(self, title):
@@ -13,6 +14,7 @@ class DetectionPipeline:
     def __init__(self, frame_size=500):
         self.frame_size = frame_size
         self.background_detection = BackgroundDetection()
+        self.object_detection = ObjectDetection()
         self.section_selector = 0
         self.stage_selector = 0
         self.ui_render_flag = False
@@ -36,8 +38,8 @@ class DetectionPipeline:
         # Mask the background
         background = self.background_detection.mask_background(self, frame_resized)
 
-        # Other detections
-        # ...
+        # Object detections
+        self.object_detection.detect(self, background.masked_frame)
 
         # Draw detected contours
         self.render_contour(frame_resized, background.contour)
