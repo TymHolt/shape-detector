@@ -29,11 +29,13 @@ class ObjectDetection:
 
             color_mask = cv2.inRange(hsv, lower, upper)
 
-            # TODO Make cleaner
+            # TODO Cleaner
             # 2 ranges for red
             if name == "red":
                 mask2 = cv2.inRange(hsv, self.red_lower2, self.red_upper2)
                 color_mask = cv2.bitwise_or(color_mask, mask2)
+                # Extra Closing for red
+                color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
 
             # Remove noise
             kernel = np.ones((3, 3), np.uint8)
@@ -48,16 +50,44 @@ class ObjectDetection:
                 if area < self.min_area:
                     continue
 
+                # Shape analysis
+                peri = cv2.arcLength(c, True)
+                approx = cv2.approxPolyDP(c, 0.03 * peri, True)
+                sides = len(approx)
+
+                circularity = 4 * np.pi * area / (peri * peri) if peri > 0 else 0
+
+                rect = cv2.minAreaRect(c)
+                (rw, rh) = rect[1]
+                aspect = max(rw, rh) / (min(rw, rh) + 1e-5)
+
+                if circularity > 0.82:
+                    shape = "sphere"
+                elif circularity > 0.65 and aspect < 1.6:
+                    shape = "cylinder"
+                elif sides == 4 and 0.8 < aspect < 1.4:
+                    shape = "cube"
+                elif sides >= 3 and sides <= 6 and aspect < 1.8:
+                    shape = "pyramid"
+                else:
+                    shape = "unknown"
+
                 objects.append({
                     "color": name,
+                    "shape": shape,
                     "contour": c,
-                    "area": area
+                    "area": area,
+                    "circularity": circularity,
+                    "sides": sides,
+                    "aspect": aspect
                 })
 
-                # Render contours
+                # Text position
+                x, y, _, _ = cv2.boundingRect(c)
                 cv2.drawContours(result, [c], -1, (0, 255, 0), 2)
-                x, y, w, h = cv2.boundingRect(c)
-                cv2.putText(result, name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                label = f"{name} {shape}"
+                cv2.putText(result, label, (x, max(y - 5, 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
         section.add_stage("Detected", result)
         return objects
