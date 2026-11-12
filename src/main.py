@@ -30,13 +30,13 @@ def main():
         key = cv2.waitKeyEx(10)
 
         if key == ord("a"):
-            detection_pipeline.stage_selector -= 1
+            detection_pipeline.ui_view_sections = True
         elif key == ord("d"):
-            detection_pipeline.stage_selector += 1
+            detection_pipeline.ui_view_sections = False
         elif key == ord("w"):
-            detection_pipeline.section_selector -= 1
+            detection_pipeline.ui_input(-1)
         elif key == ord("s"):
-            detection_pipeline.section_selector += 1
+            detection_pipeline.ui_input(1)
         elif key == ord("q"):
             break
         elif key == ord("\t"):

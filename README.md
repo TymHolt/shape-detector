@@ -28,10 +28,10 @@ python src/main.py
 #### Controls
 
 - ```Q``` -- Quit application
-- ```W``` -- Go backwards in section selection
-- ```S``` -- Go forward in section selection
-- ```A``` -- Go backwards in stage selection
-- ```D``` -- Go forward in stage selection
 - ```Tab``` -- Toggle UI
 - ```0-9``` -- Switch camera index
+- ```W``` -- Go up in UI selection
+- ```S``` -- Go down in UI selection
+- ```A``` -- Enter sub-menu
+- ```D``` -- Go back to main menu
 

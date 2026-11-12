@@ -15,9 +15,10 @@ class DetectionPipeline:
         self.frame_size = frame_size
         self.background_detection = BackgroundDetection()
         self.object_detection = ObjectDetection()
-        self.section_selector = 0
-        self.stage_selector = 0
+        self.section_selector = 1000 # Default value, gets clamped to max for final view
+        self.stage_selector = 1000  # Default value, gets clamped to max for final view
         self.ui_render_flag = False
+        self.ui_view_sections = True
         self.sections = []
 
     def add_section(self, title):
@@ -48,15 +49,15 @@ class DetectionPipeline:
         self.section_selector = max(0, min(self.section_selector, len(self.sections) - 1))
         selected_section = self.sections[self.section_selector]
         self.stage_selector = max(0, min(self.stage_selector, len(selected_section.stages) - 1))
-        stage_title, stage_frame = selected_section.stages[self.stage_selector]
+        selected_stage = selected_section.stages[self.stage_selector]
         
         # Stage frame may have different color format, copy to
-        output = stage_frame.copy()
+        output = selected_stage[1].copy()
         if len(output.shape) == 2 or output.shape[2] == 1:
             output = cv2.cvtColor(output, cv2.COLOR_GRAY2BGR)
 
         if self.ui_render_flag:
-            self.render_ui(selected_section.title, stage_title, output)
+            self.render_ui(selected_section, selected_stage, output)
 
         main_section.add_stage("Output", output)
         return output
@@ -67,6 +68,36 @@ class DetectionPipeline:
             for point in contour:
                 cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
 
-    def render_ui(self, section_title, stage_title, output):
-        cv2.putText(output, section_title, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
-        cv2.putText(output, stage_title, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    def ui_input(self, direction):
+        if not self.ui_render_flag:
+            return
+
+        if self.ui_view_sections:
+            self.section_selector += direction
+            self.stage_selector = 1000 # Default value, gets clamped to max for final view
+        else:
+            self.stage_selector += direction
+
+    def render_ui(self, current_section, current_stage, output):
+        color_dark = (0, 150, 0)
+        color_light = (100, 255, 100)
+
+        if self.ui_view_sections:
+            y = 30
+            for section in self.sections:
+                text = f"{section.title} >"
+                text_color = color_dark
+                if section.title == current_section.title:
+                    text_color = color_light
+                cv2.putText(output, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
+                y += 30
+        else:
+            cv2.putText(output, f"< {current_section.title}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color_dark, 2, cv2.LINE_AA)           
+            y = 60
+            for stage in current_section.stages:
+                text = f"{stage[0]}"
+                text_color = color_dark
+                if stage[0] == current_stage[0]:
+                    text_color = color_light
+                cv2.putText(output, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
+                y += 30
