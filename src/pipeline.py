@@ -11,7 +11,7 @@ class PipelineSection:
         self.stages.append((title, frame));
 
 class DetectionPipeline:
-    def __init__(self, frame_size=500):
+    def __init__(self, frame_size=1000):
         self.frame_size = frame_size
         self.background_detection = BackgroundDetection()
         self.object_detection = ObjectDetection()
