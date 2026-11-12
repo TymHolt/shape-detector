@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 class ObjectDetection:
     def __init__(self):
         self.color_ranges = {
@@ -28,26 +29,20 @@ class ObjectDetection:
 
             color_mask = cv2.inRange(hsv, lower, upper)
 
-            # 2 ranges for red
             if color_name == "red":
                 mask2 = cv2.inRange(hsv, self.red_lower2, self.red_upper2)
                 color_mask = cv2.bitwise_or(color_mask, mask2)
                 color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
 
-            # Saturation filter against reflections
-            sat_mask = cv2.inRange(hsv[:, :, 1], 40, 255)
+            sat_mask = cv2.inRange(hsv[:, :, 1], 35, 255)
             color_mask = cv2.bitwise_and(color_mask, sat_mask)
 
-            # Remove noise
             kernel = np.ones((3, 3), np.uint8)
             color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
             section.add_stage(f"Mask {color_name}", color_mask)
 
-            # External contours for objects
             contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-            # Inner contours (for visualization)
             contours_tree, hierarchy = cv2.findContours(color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             for c in contours:
@@ -55,9 +50,8 @@ class ObjectDetection:
                 if area < self.min_area:
                     continue
 
-                # Shape analysis
                 peri = cv2.arcLength(c, True)
-                approx = cv2.approxPolyDP(c, 0.03 * peri, True)
+                approx = cv2.approxPolyDP(c, 0.025 * peri, True)
                 sides = len(approx)
 
                 circularity = 4 * np.pi * area / (peri * peri) if peri > 0 else 0
@@ -66,32 +60,17 @@ class ObjectDetection:
                 (rw, rh) = rect[1]
                 aspect = max(rw, rh) / (min(rw, rh) + 1e-5)
 
-                # Additional features
                 hull = cv2.convexHull(c)
                 hull_area = cv2.contourArea(hull)
                 solidity = area / hull_area if hull_area > 0 else 0
 
-                x, y, w, h = cv2.boundingRect(c)
-                rect_area = w * h
-                extent = area / rect_area if rect_area > 0 else 0
-
-                # Side length variance
                 sides_pts = approx.reshape(-1, 2)
-                side_lengths = []
-                for i in range(len(sides_pts)):
-                    p1 = sides_pts[i]
-                    p2 = sides_pts[(i + 1) % len(sides_pts)]
-                    side_lengths.append(np.linalg.norm(p1 - p2))
-                side_var = np.var(side_lengths) / (np.mean(side_lengths) + 1e-5) if side_lengths else 0
+                if len(sides_pts) >= 3:
+                    side_lengths = [np.linalg.norm(sides_pts[i] - sides_pts[(i + 1) % len(sides_pts)]) for i in range(len(sides_pts))]
+                    side_var = np.var(side_lengths) / (np.mean(side_lengths) + 1e-5)
+                else:
+                    side_var = 0
 
-                # Convexity defects
-                hull_idx = cv2.convexHull(c, returnPoints=False)
-                defect_count = 0
-                if hull_idx is not None and len(hull_idx) > 3 and len(c) > 3:
-                    defects = cv2.convexityDefects(c, hull_idx)
-                    defect_count = 0 if defects is None else len(defects)
-
-                # Angles between sides
                 angles = []
                 pts = approx.reshape(-1, 2)
                 for i in range(len(pts)):
@@ -102,18 +81,43 @@ class ObjectDetection:
                     v2 = p2 - p1
                     norm = np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-5
                     cosang = np.dot(v1, v2) / norm
-                    angles.append(np.degrees(np.arccos(np.clip(cosang, -1, 1))))
+                    angle = np.degrees(np.arccos(np.clip(cosang, -1.0, 1.0)))
+                    angles.append(angle)
+
+                min_angle = min(angles) if angles else 180
                 angle_var = np.var(angles) if angles else 0
 
-                # Classification
-                if sides == 4 and 0.85 < aspect < 1.35 and solidity > 0.90 and side_var < 0.40 and defect_count < 3:
-                    shape = "cube"
-                elif sides >= 6 and circularity > 0.65 and aspect < 1.5 and defect_count <= 2:
-                    shape = "cylinder"
-                elif side_var > 0.50 or defect_count >= 3 or (sides == 4 and side_var > 0.30):
-                    shape = "pyramid"
-                elif circularity > 0.85 and 0.85 < aspect < 1.15:
+                inner_count = 0
+                if hierarchy is not None:
+                    for i, cnt in enumerate(contours_tree):
+                        if hierarchy[0][i][3] != -1:
+                            M = cv2.moments(cnt)
+                            if M["m00"] > 0:
+                                cx = int(M["m10"] / M["m00"])
+                                cy = int(M["m01"] / M["m00"])
+                                if cv2.pointPolygonTest(c, (cx, cy), False) >= 0 and cv2.contourArea(cnt) > 40:
+                                    inner_count += 1
+
+                M = cv2.moments(c)
+                if M["m00"] == 0:
+                    continue
+                cx = M["m10"] / M["m00"]
+                cy = M["m01"] / M["m00"]
+
+                dists = np.linalg.norm(c.reshape(-1, 2) - np.array([cx, cy]), axis=1)
+                mean_dist = np.mean(dists)
+                max_dist = np.max(dists)
+                pointiness = max_dist / (mean_dist + 1e-5)          # > 1.4–1.6 oft Pyramid
+                dist_var = np.var(dists) / (mean_dist + 1e-5)
+
+                if sides >= 7 and circularity >= 0.80 and solidity > 0.92 and aspect < 1.28:
                     shape = "sphere"
+                elif sides >= 6 and circularity >= 0.70 and circularity < 0.80 and solidity > 0.87 and pointiness < 1.55:
+                    shape = "cylinder"
+                elif sides == 4 and side_var < 0.25 and pointiness < 1.45 and 0.60 < circularity < 0.76 and solidity > 0.88:
+                    shape = "pyramid"
+                elif pointiness >= 1.45 or (side_var > 0.40 and sides <= 6):
+                    shape = "cube"
                 else:
                     shape = "unknown"
 
@@ -122,18 +126,21 @@ class ObjectDetection:
                     "shape": shape,
                     "contour": c,
                     "area": area,
-                    "circularity": circularity,
                     "sides": sides,
-                    "aspect": aspect,
-                    "defect_count": defect_count,
-                    "angle_var": angle_var
+                    "circularity": circularity,
+                    "side_var": side_var,
+                    "solidity": solidity,
+                    "min_angle": min_angle,
+                    "angle_var": angle_var,
+                    "inner_count": inner_count,
+                    "aspect": aspect
                 })
 
-                # Label color logic
+                # Label
                 label = f"{color_name} {shape}"
                 label_color = (255, 255, 255)
                 if pipeline.ui_render_flag:
-                    label = f"{color_name} {shape} s={sides} def={defect_count} ang={angle_var:.0f} var={side_var:.2f}"
+                    label = f"{color_name} {shape} s={sides} c={circularity:.2f} var={side_var:.2f} point={pointiness:.2f}"
                 else:
                     if color_name == "red":
                         label_color = (0, 0, 255)
@@ -143,27 +150,25 @@ class ObjectDetection:
                         label_color = (255, 0, 0)
                     elif color_name == "yellow":
                         label_color = (0, 255, 255)
-                    else:
-                        label_color = (255, 255, 255)
 
-                # Draw main contour
                 cv2.drawContours(result, [c], -1, label_color, 2)
 
-                # Highlight corners (approx points)
-                for point in approx:
-                    cv2.circle(result, tuple(point[0]), 4, (0, 255, 255), -1)
+                for pt in approx:
+                    cv2.circle(result, tuple(pt[0]), 5, (255, 0, 255), -1)
 
-                # Highlight inner contours (thinner, different color)
                 if hierarchy is not None:
                     for i, cnt in enumerate(contours_tree):
-                        if hierarchy[0][i][3] != -1:  # has parent → inner
-                            if cv2.contourArea(cnt) > 50:
-                                cv2.drawContours(result, [cnt], -1, (255, 0, 255), 1)
+                        if hierarchy[0][i][3] != -1 and cv2.contourArea(cnt) > 30:
+                            M = cv2.moments(cnt)
+                            if M["m00"] > 0:
+                                cx = int(M["m10"] / M["m00"])
+                                cy = int(M["m01"] / M["m00"])
+                                if cv2.pointPolygonTest(c, (cx, cy), False) >= 0:
+                                    cv2.drawContours(result, [cnt], -1, (255, 100, 255), 1)
 
-                # Text
-                x, y, _, _ = cv2.boundingRect(c)
-                cv2.putText(result, label, (x, max(y - 5, 10)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, label_color, 1)
+                bx, by, _, _ = cv2.boundingRect(c)
+                cv2.putText(result, label, (bx, max(by - 6, 15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.40, label_color, 1)
 
         section.add_stage("Detected", result)
         return objects
