@@ -1,14 +1,7 @@
 import cv2
+from pipeline_classes import *
 from background import *
 from object_detection import *
-
-class PipelineSection:
-    def __init__(self, title):
-        self.title = title
-        self.stages = []
-
-    def add_stage(self, title, frame):
-        self.stages.append((title, frame));
 
 class DetectionPipeline:
     def __init__(self, frame_size=500):
@@ -52,7 +45,7 @@ class DetectionPipeline:
         selected_stage = selected_section.stages[self.stage_selector]
         
         # Stage frame may have different color format, copy to
-        output = selected_stage[1].copy()
+        output = selected_stage.frame.copy()
         if len(output.shape) == 2 or output.shape[2] == 1:
             output = cv2.cvtColor(output, cv2.COLOR_GRAY2BGR)
 
@@ -95,9 +88,9 @@ class DetectionPipeline:
             cv2.putText(output, f"< {current_section.title}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color_dark, 2, cv2.LINE_AA)           
             y = 60
             for stage in current_section.stages:
-                text = f"{stage[0]}"
+                text = f"{stage.title}"
                 text_color = color_dark
-                if stage[0] == current_stage[0]:
+                if stage.title == current_stage.title:
                     text_color = color_light
                 cv2.putText(output, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
                 y += 30

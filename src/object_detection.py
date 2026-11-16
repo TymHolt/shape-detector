@@ -35,10 +35,12 @@ class ObjectDetection:
         objects = []
         result = masked_frame.copy()
 
+        # Object detection for each color
         for object_color in OBJECT_COLORS:
             color_mask_frame = self.create_color_mask(hsv_frame, object_color)
             section.add_stage(f"Mask {object_color.name}", color_mask_frame)
 
+            # Find contours
             contours, _ = cv2.findContours(color_mask_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             contours_tree, hierarchy = cv2.findContours(color_mask_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
