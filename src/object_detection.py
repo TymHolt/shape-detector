@@ -1,49 +1,46 @@
 import cv2
 import numpy as np
-
+from object_classes import *
 
 class ObjectDetection:
     def __init__(self):
-        self.color_ranges = {
-            "yellow": ([15, 80, 80], [40, 255, 255]),
-            "green": ([40, 50, 50], [85, 255, 255]),
-            "blue": ([90, 50, 50], [130, 255, 255]),
-            "red": ([0, 70, 50], [10, 255, 255]),
-        }
-        self.red_lower2 = np.array([170, 70, 50])
-        self.red_upper2 = np.array([180, 255, 255])
         self.min_area = 150
+
+    def create_color_mask(self, hsv_frame, object_color):
+        hsv_range = object_color.hsv_range
+        hsv_scond_range = object_color.hsv_second_range
+        color_mask = cv2.inRange(hsv_frame, hsv_range.lower, hsv_range.upper)
+
+        if hsv_scond_range != None:
+            mask2 = cv2.inRange(hsv_frame, hsv_scond_range.lower, hsv_scond_range.upper)
+            color_mask = cv2.bitwise_or(color_mask, mask2)
+            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+
+        sat_mask = cv2.inRange(hsv_frame[:, :, 1], 35, 255)
+        color_mask = cv2.bitwise_and(color_mask, sat_mask)
+
+        kernel = np.ones((3, 3), np.uint8)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+
+        return color_mask
 
     def detect(self, pipeline, masked_frame):
         section = pipeline.add_section("Objects")
 
-        hsv = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2HSV)
-        section.add_stage("HSV", hsv)
+        # Turn frame into HSV
+        hsv_frame = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2HSV)
+        section.add_stage("HSV", hsv_frame)
 
         objects = []
         result = masked_frame.copy()
 
-        for color_name, (lower, upper) in self.color_ranges.items():
-            lower = np.array(lower)
-            upper = np.array(upper)
+        for object_color in OBJECT_COLORS:
+            color_mask_frame = self.create_color_mask(hsv_frame, object_color)
+            section.add_stage(f"Mask {object_color.name}", color_mask_frame)
 
-            color_mask = cv2.inRange(hsv, lower, upper)
-
-            if color_name == "red":
-                mask2 = cv2.inRange(hsv, self.red_lower2, self.red_upper2)
-                color_mask = cv2.bitwise_or(color_mask, mask2)
-                color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
-
-            sat_mask = cv2.inRange(hsv[:, :, 1], 35, 255)
-            color_mask = cv2.bitwise_and(color_mask, sat_mask)
-
-            kernel = np.ones((3, 3), np.uint8)
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
-            section.add_stage(f"Mask {color_name}", color_mask)
-
-            contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            contours_tree, hierarchy = cv2.findContours(color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(color_mask_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours_tree, hierarchy = cv2.findContours(color_mask_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             for c in contours:
                 area = cv2.contourArea(c)
@@ -122,7 +119,7 @@ class ObjectDetection:
                     shape = "unknown"
 
                 objects.append({
-                    "color": color_name,
+                    "color": object_color.name,
                     "shape": shape,
                     "contour": c,
                     "area": area,
@@ -137,19 +134,12 @@ class ObjectDetection:
                 })
 
                 # Label
-                label = f"{color_name} {shape}"
+                label = f"{object_color.name} {shape}"
                 label_color = (255, 255, 255)
                 if pipeline.ui_render_flag:
-                    label = f"{color_name} {shape} s={sides} c={circularity:.2f} var={side_var:.2f} point={pointiness:.2f}"
+                    label = f"{object_color.name} {shape} s={sides} c={circularity:.2f} var={side_var:.2f} point={pointiness:.2f}"
                 else:
-                    if color_name == "red":
-                        label_color = (0, 0, 255)
-                    elif color_name == "green":
-                        label_color = (0, 255, 0)
-                    elif color_name == "blue":
-                        label_color = (255, 0, 0)
-                    elif color_name == "yellow":
-                        label_color = (0, 255, 255)
+                    label_color = object_color.rgb
 
                 cv2.drawContours(result, [c], -1, label_color, 2)
 

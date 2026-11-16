@@ -1,6 +1,6 @@
 import cv2
 from background import *
-from objects import *
+from object_detection import *
 
 class PipelineSection:
     def __init__(self, title):
@@ -11,7 +11,7 @@ class PipelineSection:
         self.stages.append((title, frame));
 
 class DetectionPipeline:
-    def __init__(self, frame_size=1000):
+    def __init__(self, frame_size=500):
         self.frame_size = frame_size
         self.background_detection = BackgroundDetection()
         self.object_detection = ObjectDetection()

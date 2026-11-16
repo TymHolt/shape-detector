@@ -32,6 +32,6 @@ python src/main.py
 - ```0-9``` -- Switch camera index
 - ```W``` -- Go up in UI selection
 - ```S``` -- Go down in UI selection
-- ```A``` -- Enter sub-menu
-- ```D``` -- Go back to main menu
+- ```D``` -- Enter sub-menu
+- ```A``` -- Go back to main menu
 
