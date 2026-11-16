@@ -21,3 +21,26 @@ OBJECT_COLORS = [
     ObjectColor("red", (0, 0, 255), ColorRange([0, 70, 50], [10, 255, 255]),
                 ColorRange([170, 70, 50], [180, 255, 255]))
 ]
+
+class ObjectAttributes:
+    def __init__(self, sides=0, side_var=0, circularity=0, solidity=0, pointiness=0, aspect=0):
+        self.sides = sides
+        self.side_var = side_var
+        self.circularity = circularity
+        self.solidity = solidity
+        self.pointiness = pointiness
+        self.aspect = aspect
+        pass
+
+    def as_string(self):
+        return f"sides={self.sides} side_v={self.side_var:.2f} circ={self.circularity:.2f} sol={self.solidity:.2f} point={self.pointiness:.2f} aspect={self.aspect:.2f}"
+
+class ShapedObject:
+    def __init__(self, color, attributes, shape, contour):
+        self.color = color
+        self.attributes = attributes
+        self.shape = shape
+        self.contour = contour
+
+    def as_string(self):
+        return f"{self.color.name} {self.shape}"
