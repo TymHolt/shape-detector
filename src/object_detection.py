@@ -131,13 +131,14 @@ class ObjectDetection:
         if hsv_scond_range != None:
             mask2 = cv2.inRange(hsv_frame, hsv_scond_range.lower, hsv_scond_range.upper)
             color_mask = cv2.bitwise_or(color_mask, mask2)
-            color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
 
-        sat_mask = cv2.inRange(hsv_frame[:, :, 1], 35, 255)
+        sat_mask = cv2.inRange(hsv_frame[:, :, 1], 50, 255) # TODO 0 -> make adjustable, saturation
         color_mask = cv2.bitwise_and(color_mask, sat_mask)
 
-        kernel = np.ones((3, 3), np.uint8)
-        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
-        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        kernel_open = np.ones((5, 5), np.uint8)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel_open, iterations=2)
+
+        kernel_close = np.ones((7, 7), np.uint8)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel_close, iterations=1)
 
         return color_mask
