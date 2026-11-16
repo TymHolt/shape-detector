@@ -7,7 +7,7 @@ class ObjectDetection:
         self.object_min_area = object_min_area
 
     def detect(self, pipeline, masked_frame):
-        section = pipeline.add_section("Objects")
+        section = pipeline.gui.add_section("Objects")
 
         # Turn frame into HSV
         hsv_frame = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2HSV)
@@ -48,7 +48,7 @@ class ObjectDetection:
                 # Label
                 label = shaped_object.as_string()
                 label_color = (255, 255, 255)
-                if pipeline.ui_render_flag:
+                if pipeline.gui.visible:
                     label = object_attributes.as_string()
                 else:
                     label_color = object_color.rgb

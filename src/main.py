@@ -1,5 +1,6 @@
 import cv2
 from pipeline import *
+from pipeline_classes import *
 
 def main():
     capture_index = -1 # This way the capture will be updated
@@ -30,17 +31,17 @@ def main():
         key = cv2.waitKeyEx(10)
 
         if key == ord("a"):
-            detection_pipeline.ui_view_sections = True
+            detection_pipeline.gui.ui_input(INPUT_AXIS_HORIZONTAL, -1)
         elif key == ord("d"):
-            detection_pipeline.ui_view_sections = False
+            detection_pipeline.gui.ui_input(INPUT_AXIS_HORIZONTAL, 1)
         elif key == ord("w"):
-            detection_pipeline.ui_input(-1)
+            detection_pipeline.gui.ui_input(INPUT_AXIS_VERTICAL, -1)
         elif key == ord("s"):
-            detection_pipeline.ui_input(1)
+            detection_pipeline.gui.ui_input(INPUT_AXIS_VERTICAL, 1)
         elif key == ord("q"):
             break
         elif key == ord("\t"):
-            detection_pipeline.ui_render_flag = not detection_pipeline.ui_render_flag
+            detection_pipeline.gui.visible = not detection_pipeline.gui.visible
         elif key == ord("0"):
             capture_index_switch = 0
         elif key == ord("1"):
