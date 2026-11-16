@@ -11,8 +11,6 @@ class DetectionPipeline:
         self.gui = PipelineGui()
 
     def handle_frame(self, frame):
-        self.gui.update()
-
         main_section = self.gui.add_section("Main")
         main_section.add_stage("Camera Input", frame)
 
@@ -27,15 +25,10 @@ class DetectionPipeline:
         # Object detections
         self.object_detection.detect(self, background.masked_frame)
 
-        # Draw detected contours
-        self.render_contour(frame_resized, background.contour)
-
+        self.gui.clamp_all_indices()
         selected_section = self.gui.get_current_section()
         selected_stage = self.gui.get_current_stage()
 
-        if selected_section == None or selected_stage == None:
-            return frame_resized # This should never happen?
-        
         # Stage frame may have different color format, copy to
         output = selected_stage.frame.copy()
         if len(output.shape) == 2 or output.shape[2] == 1:
@@ -43,15 +36,8 @@ class DetectionPipeline:
 
         if self.gui.visible:
             self.render_ui(selected_section, selected_stage, output)
-
-        main_section.add_stage("Output", output)
+            
         return output
-
-    def render_contour(self, frame, contour):
-        if contour is not None:
-            cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2)
-            for point in contour:
-                cv2.circle(frame, tuple(point[0]), 5, (0, 0, 255), -1)
 
     def render_ui(self, current_section, current_stage, output):
         color_dark = (0, 150, 0)

@@ -81,11 +81,11 @@ class PipelineGui:
     def get_current_stage(self):
         current_section = self.get_current_section()
         if current_section == None:
-            return None
+            return None        
 
         count = len(current_section.stages)
         if count <= self.stage_index or count < 1:
-            return None
+            return None                
         return current_section.stages[self.stage_index]
 
     def get_current_adjuster(self):
@@ -115,9 +115,6 @@ class PipelineGui:
             return
 
         self.adjuster_index = clamp_index(self.adjuster_index, 0, len(current_stage.adjusters) - 1)
-        
-    def update(self):
-        self.clamp_all_indices()
 
     def ui_input(self, axis, direction):
         if not self.visible:

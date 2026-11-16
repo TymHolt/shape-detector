@@ -2,10 +2,9 @@ import cv2
 import numpy as np
 
 class Background:
-    def __init__(self, mask, masked_frame, contour):
+    def __init__(self, mask, masked_frame):
         self.mask = mask
         self.masked_frame = masked_frame
-        self.contour = contour
 
 class BackgroundDetection:
     def __init__(self, blurr_size = 5, canny_low = 50, canny_high = 150):
@@ -53,6 +52,14 @@ class BackgroundDetection:
                 background_area = area
                 break
 
+        # Highlight detected background contour
+        contoured_frame = frame.copy()
+        if background_contour is not None:
+            cv2.drawContours(contoured_frame, [background_contour], -1, (0, 255, 0), 2)
+            for point in background_contour:
+                cv2.circle(contoured_frame, tuple(point[0]), 5, (0, 0, 255), -1)
+        section.add_stage("Contoured", contoured_frame)
+
         # Create mask
         mask = np.zeros(frame.shape[:2], dtype=np.uint8)
         if background_contour is not None:
@@ -67,4 +74,4 @@ class BackgroundDetection:
         masked_frame = cv2.bitwise_and(frame, frame, mask=mask)
         section.add_stage("Masked", masked_frame)
 
-        return Background(mask, masked_frame, background_contour)
+        return Background(mask, masked_frame)
