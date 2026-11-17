@@ -21,8 +21,11 @@ class ObjectDetection:
             mask_stage = section.add_stage(f"Mask {object_color.name}", hsv_frame)
             sat_lower_adjuster = mask_stage.add_adjuster(f"Saturation (Lower) {object_color.name}: ", 0, 50, 255, 5)
             sat_upper_adjuster = mask_stage.add_adjuster(f"Saturation (Upper) {object_color.name}: ", 0, 255, 255, 5)
-                        
-            color_mask_frame = self.create_color_mask(hsv_frame, object_color, sat_lower_adjuster.current, sat_upper_adjuster.current)
+            v_lower_adjuster = mask_stage.add_adjuster(f"Light (Lower) {object_color.name}: ", 0, 50, 255, 5)
+            v_upper_adjuster = mask_stage.add_adjuster(f"Light (Upper) {object_color.name}: ", 0, 255, 255, 5)
+                                    
+            color_mask_frame = self.create_color_mask(hsv_frame, object_color, sat_lower_adjuster.current, sat_upper_adjuster.current,
+                                                      v_lower_adjuster.current, v_upper_adjuster.current)
             mask_stage.frame = color_mask_frame
 
             # Find contours
@@ -40,10 +43,12 @@ class ObjectDetection:
 
                 # Spherical Object
                 if object_attributes.sides >= 6 and object_attributes.circularity >= 0.70:
-                    if object_attributes.sides >= 7 and object_attributes.circularity >= 0.80:
-                        shape = "sphere"
+                    if object_attributes.aspect >= 1.1:
+                        shape = "cylinder"                            
+                    elif object_attributes.circularity < 0.75:
+                        shape = "cylinder"        
                     else:
-                        shape = "cylinder"
+                        shape = "sphere"
                 else: # Non-Spehrical object
                     if object_attributes.sides == 4:
                         shape = "pyramid"
@@ -128,7 +133,7 @@ class ObjectDetection:
         
         return (nx, ny)
 
-    def create_color_mask(self, hsv_frame, object_color, sat_lower, sat_upper):
+    def create_color_mask(self, hsv_frame, object_color, sat_lower, sat_upper, v_lower, v_upper):
         hsv_range = object_color.hsv_range
         hsv_scond_range = object_color.hsv_second_range
         color_mask = cv2.inRange(hsv_frame, hsv_range.lower, hsv_range.upper)
@@ -139,6 +144,9 @@ class ObjectDetection:
 
         saturation_mask = cv2.inRange(hsv_frame[:, :, 1], sat_lower, sat_upper)
         color_mask = cv2.bitwise_and(color_mask, saturation_mask)
+
+        v_mask = cv2.inRange(hsv_frame[:, :, 2], v_lower, v_upper)
+        color_mask = cv2.bitwise_and(color_mask, v_mask)
 
         kernel_open = np.ones((5, 5), np.uint8)
         color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel_open, iterations=2)
