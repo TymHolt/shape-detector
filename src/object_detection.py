@@ -42,7 +42,7 @@ class ObjectDetection:
                 shape = "unknown"
 
                 # Spherical Object
-                if object_attributes.sides >= 6 and object_attributes.circularity >= 0.70:
+                if object_attributes.sides >= 7 and object_attributes.circularity >= 0.70:
                     if object_attributes.aspect >= 1.1:
                         shape = "cylinder"                            
                     elif object_attributes.circularity < 0.75:
@@ -50,7 +50,7 @@ class ObjectDetection:
                     else:
                         shape = "sphere"
                 else: # Non-Spehrical object
-                    if object_attributes.sides == 4:
+                    if object_attributes.sides <= 5 and object_attributes.aspect < 1.1:
                         shape = "pyramid"
                     else:
                         shape = "cube"
