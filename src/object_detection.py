@@ -68,9 +68,8 @@ class ObjectDetection:
 
                 cv2.drawContours(result, [contour], -1, label_color, 2)
 
-                # TODO
-                # for pt in approx:
-                #    cv2.circle(result, tuple(pt[0]), 5, (255, 0, 255), -1)
+                for pt in object_attributes.approx:
+                    cv2.circle(result, tuple(pt[0]), 5, (255, 0, 255), -1)
 
                 if hierarchy is not None:
                     for i, cnt in enumerate(contours_tree):
@@ -99,6 +98,7 @@ class ObjectDetection:
         # Sides
         peri = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.025 * peri, True)
+        object_attributes.approx = approx
         object_attributes.sides = len(approx)
 
         # Circularity

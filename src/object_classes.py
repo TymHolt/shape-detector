@@ -14,20 +14,20 @@ class ObjectColor:
         self.hsv_second_range = hsv_second_range
 
 OBJECT_COLORS = [
-    ObjectColor("yellow", (0, 255, 255), ColorRange([15, 80, 80], [40, 255, 255])),
-    ObjectColor("green", (0, 255, 0), ColorRange([40, 50, 50], [85, 255, 255])),
-    ObjectColor("blue", (255, 0, 0), ColorRange([90, 50, 50], [130, 255, 255])),
+    ObjectColor("yellow", (0, 255, 255), ColorRange([15, 0, 80], [40, 255, 255])),
+    ObjectColor("green", (0, 255, 0), ColorRange([40, 0, 50], [85, 255, 255])),
+    ObjectColor("blue", (255, 0, 0), ColorRange([90, 0, 50], [130, 255, 255])),
     # Red has two ranges!
-    ObjectColor("red", (0, 0, 255), ColorRange([0, 70, 50], [10, 255, 255]),
-                ColorRange([170, 70, 50], [180, 255, 255]))
+    ObjectColor("red", (0, 0, 255), ColorRange([0, 0, 50], [10, 255, 255]),
+                ColorRange([170, 0, 50], [180, 255, 255]))
 ]
 
 class ObjectAttributes:
-    def __init__(self, sides=0, circularity=0, aspect=0):
+    def __init__(self, sides=0, circularity=0, aspect=0, approx=None):
         self.sides = sides
         self.circularity = circularity
         self.aspect = aspect
-        pass
+        self.approx = approx
 
     def as_string(self):
         return f"sides={self.sides} circ={self.circularity:.2f} aspect={self.aspect:.2f}"
