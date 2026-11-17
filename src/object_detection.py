@@ -37,23 +37,16 @@ class ObjectDetection:
                 object_attributes = self.get_object_attributes(contour)
                 if object_attributes == None:
                     continue
-
+  
                 # Identify object shape
-                shape = "unknown"
-
-                # Spherical Object
-                if object_attributes.sides >= 7 and object_attributes.circularity >= 0.70:
-                    if object_attributes.aspect >= 1.1:
-                        shape = "cylinder"                            
-                    elif object_attributes.circularity < 0.75:
-                        shape = "cylinder"        
-                    else:
-                        shape = "sphere"
-                else: # Non-Spehrical object
-                    if object_attributes.sides <= 5 and object_attributes.aspect < 1.1:
-                        shape = "pyramid"
-                    else:
-                        shape = "cube"
+                if object_attributes.sides >= 7 and object_attributes.aspect >= 1.22:
+                    shape = "cylinder"
+                elif object_attributes.sides >= 7 and object_attributes.circle_fill >= 0.82 and object_attributes.aspect < 1.18:
+                    shape = "sphere"
+                elif object_attributes.sides <= 4 and object_attributes.aspect < 1.15:
+                    shape = "pyramid"
+                else:
+                    shape = "cube"
 
                 shaped_object = ShapedObject(object_color, object_attributes, shape, contour)
                 objects.append(shaped_object)
@@ -113,6 +106,14 @@ class ObjectDetection:
         rect = cv2.minAreaRect(contour)
         (rw, rh) = rect[1]
         object_attributes.aspect = max(rw, rh) / (min(rw, rh) + 1e-5)
+
+        # Circle fill
+        (_, _), radius = cv2.minEnclosingCircle(contour)
+
+        object_attributes.circle_fill = (
+            area / (np.pi * radius ** 2)
+            if radius > 0 else 0
+        )
 
         return object_attributes
 

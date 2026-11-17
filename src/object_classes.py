@@ -23,14 +23,15 @@ OBJECT_COLORS = [
 ]
 
 class ObjectAttributes:
-    def __init__(self, sides=0, circularity=0, aspect=0, approx=None):
+    def __init__(self, sides=0, circularity=0, aspect=0, circle_fill=0, approx=None):
         self.sides = sides
         self.circularity = circularity
         self.aspect = aspect
+        self.circle_fill = circle_fill
         self.approx = approx
 
     def as_string(self):
-        return f"sides={self.sides} circ={self.circularity:.2f} aspect={self.aspect:.2f}"
+        return f"sides={self.sides} circ={self.circularity:.2f} aspect={self.aspect:.2f} circle_fill={self.circle_fill:.2f}"
 
 class ShapedObject:
     def __init__(self, color, attributes, shape, contour):
