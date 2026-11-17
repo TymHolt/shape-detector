@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 
 class Background:
-    def __init__(self, mask, masked_frame):
+    def __init__(self, mask, masked_frame, contour):
         self.mask = mask
         self.masked_frame = masked_frame
+        self.contour = contour
 
 class BackgroundDetection:
     def __init__(self, blurr_size = 5, canny_low = 50, canny_high = 150):
@@ -74,4 +75,4 @@ class BackgroundDetection:
         masked_frame = cv2.bitwise_and(frame, frame, mask=mask)
         section.add_stage("Masked", masked_frame)
 
-        return Background(mask, masked_frame)
+        return Background(mask, masked_frame, background_contour)

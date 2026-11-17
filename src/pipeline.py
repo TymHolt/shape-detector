@@ -9,6 +9,7 @@ class DetectionPipeline:
         self.background_detection = BackgroundDetection()
         self.object_detection = ObjectDetection()
         self.gui = PipelineGui()
+        self.background = None
 
     def handle_frame(self, frame):
         main_section = self.gui.add_section("Main")
@@ -20,10 +21,10 @@ class DetectionPipeline:
         main_section.add_stage("Camera Input Resized", frame_resized)
 
         # Mask the background
-        background = self.background_detection.mask_background(self, frame_resized)
+        self.background = self.background_detection.mask_background(self, frame_resized)
 
         # Object detections
-        self.object_detection.detect(self, background.masked_frame)
+        self.object_detection.detect(self, self.background.masked_frame)
 
         # Stage frame may have different color format, copy to
         self.gui.clamp_all_indices()
