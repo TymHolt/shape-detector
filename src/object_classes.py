@@ -23,17 +23,14 @@ OBJECT_COLORS = [
 ]
 
 class ObjectAttributes:
-    def __init__(self, sides=0, side_var=0, circularity=0, solidity=0, pointiness=0, aspect=0):
+    def __init__(self, sides=0, circularity=0, aspect=0):
         self.sides = sides
-        self.side_var = side_var
         self.circularity = circularity
-        self.solidity = solidity
-        self.pointiness = pointiness
         self.aspect = aspect
         pass
 
     def as_string(self):
-        return f"sides={self.sides} side_v={self.side_var:.2f} circ={self.circularity:.2f} sol={self.solidity:.2f} point={self.pointiness:.2f} aspect={self.aspect:.2f}"
+        return f"sides={self.sides} circ={self.circularity:.2f} aspect={self.aspect:.2f}"
 
 class ShapedObject:
     def __init__(self, color, attributes, shape, contour):

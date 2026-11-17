@@ -19,8 +19,10 @@ class ObjectDetection:
         # Object detection for each color
         for object_color in OBJECT_COLORS:
             mask_stage = section.add_stage(f"Mask {object_color.name}", hsv_frame)
-            sat_adjuster = mask_stage.add_adjuster(f"Sat {object_color.name}", 0, 50, 255, 5)
-            color_mask_frame = self.create_color_mask(hsv_frame, object_color, sat_adjuster.current)
+            sat_lower_adjuster = mask_stage.add_adjuster(f"Saturation (Lower) {object_color.name}: ", 0, 50, 255, 5)
+            sat_upper_adjuster = mask_stage.add_adjuster(f"Saturation (Upper) {object_color.name}: ", 0, 255, 255, 5)
+                        
+            color_mask_frame = self.create_color_mask(hsv_frame, object_color, sat_lower_adjuster.current, sat_upper_adjuster.current)
             mask_stage.frame = color_mask_frame
 
             # Find contours
@@ -47,13 +49,6 @@ class ObjectDetection:
                         shape = "pyramid"
                     else:
                         shape = "cube"
-
-                #if object_attributes.sides >= 7 and object_attributes.circularity >= 0.80 and object_attributes.solidity > 0.92 and object_attributes.aspect < 1.28:
-                #    shape = "sphere"
-                #elif object_attributes.sides >= 6 and object_attributes.circularity >= 0.70 and object_attributes.circularity < 0.80 and object_attributes.solidity > 0.87 and object_attributes.pointiness < 1.55:
-                #    shape = "cylinder"
-                #elif object_attributes.pointiness >= 1.45 or (object_attributes.side_var > 0.40 and object_attributes.sides <= 6):
-                #    shape = "cube"    
 
                 shaped_object = ShapedObject(object_color, object_attributes, shape, contour)
                 objects.append(shaped_object)
@@ -114,31 +109,6 @@ class ObjectDetection:
         (rw, rh) = rect[1]
         object_attributes.aspect = max(rw, rh) / (min(rw, rh) + 1e-5)
 
-        # Solidity
-        hull = cv2.convexHull(contour)
-        hull_area = cv2.contourArea(hull)
-        object_attributes.solidity = area / hull_area if hull_area > 0 else 0
-
-        # Side var
-        sides_pts = approx.reshape(-1, 2)
-        if len(sides_pts) >= 3:
-            side_lengths = [np.linalg.norm(sides_pts[i] - sides_pts[(i + 1) % len(sides_pts)]) for i in range(len(sides_pts))]
-            object_attributes.side_var = np.var(side_lengths) / (np.mean(side_lengths) + 1e-5)
-        else:
-            object_attributes.side_var = 0
-
-        # Pointiness
-        M = cv2.moments(contour)
-        if M["m00"] == 0:
-            return None
-        cx = M["m10"] / M["m00"]
-        cy = M["m01"] / M["m00"]
-
-        dists = np.linalg.norm(contour.reshape(-1, 2) - np.array([cx, cy]), axis=1)
-        mean_dist = np.mean(dists)
-        max_dist = np.max(dists)
-        object_attributes.pointiness = max_dist / (mean_dist + 1e-5)
-
         return object_attributes
 
     def get_normalized_position(self, background_contour, object_contour):
@@ -158,7 +128,7 @@ class ObjectDetection:
         
         return (nx, ny)
 
-    def create_color_mask(self, hsv_frame, object_color, sat_value):
+    def create_color_mask(self, hsv_frame, object_color, sat_lower, sat_upper):
         hsv_range = object_color.hsv_range
         hsv_scond_range = object_color.hsv_second_range
         color_mask = cv2.inRange(hsv_frame, hsv_range.lower, hsv_range.upper)
@@ -167,8 +137,8 @@ class ObjectDetection:
             mask2 = cv2.inRange(hsv_frame, hsv_scond_range.lower, hsv_scond_range.upper)
             color_mask = cv2.bitwise_or(color_mask, mask2)
 
-        sat_mask = cv2.inRange(hsv_frame[:, :, 1], sat_value, 255)
-        color_mask = cv2.bitwise_and(color_mask, sat_mask)
+        saturation_mask = cv2.inRange(hsv_frame[:, :, 1], sat_lower, sat_upper)
+        color_mask = cv2.bitwise_and(color_mask, saturation_mask)
 
         kernel_open = np.ones((5, 5), np.uint8)
         color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel_open, iterations=2)
