@@ -1,3 +1,5 @@
+import cv2
+
 def clamp_index(curr_value, min_value, max_value):
     return max(min_value, min(max_value, curr_value))
 
@@ -51,6 +53,9 @@ VIEW_DEPTH_MAX = 2
 
 INPUT_AXIS_VERTICAL = 0
 INPUT_AXIS_HORIZONTAL = 1
+
+GUI_DARK = (0, 150, 0)
+GUI_LIGHT = (100, 255, 100)
 
 class PipelineGui:
     def __init__(self):
@@ -116,7 +121,7 @@ class PipelineGui:
 
         self.adjuster_index = clamp_index(self.adjuster_index, 0, len(current_stage.adjusters) - 1)
 
-    def ui_input(self, axis, direction):
+    def handle_input(self, axis, direction):
         if not self.visible:
             return
 
@@ -130,4 +135,33 @@ class PipelineGui:
                 self.adjuster_index += direction
         elif axis == INPUT_AXIS_HORIZONTAL:
             self.view_depth += direction
+
+    def render(self, frame):
+        current_section = self.get_current_section()
+        current_stage = self.get_current_stage()
+        current_adjuster = self.get_current_adjuster()
+
+        # TODO Curent adjuster == None
+        if current_section == None or current_stage == None or not self.visible:
+            return 
+    
+        if self.view_depth == VIEW_DEPTH_SECTION:
+            y = 30
+            for section in self.sections:
+                text = f"{section.title} >"
+                text_color = GUI_DARK
+                if section.title == current_section.title:
+                    text_color = GUI_LIGHT
+                cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
+                y += 30
+        else:
+            cv2.putText(frame, f"< {current_section.title}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, GUI_DARK, 2, cv2.LINE_AA)           
+            y = 60
+            for stage in current_section.stages:
+                text = f"{stage.title}"
+                text_color = GUI_DARK
+                if stage.title == current_stage.title:
+                    text_color = GUI_LIGHT
+                cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
+                y += 30
 

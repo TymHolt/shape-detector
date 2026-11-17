@@ -31,13 +31,13 @@ def main():
         key = cv2.waitKeyEx(10)
 
         if key == ord("a"):
-            detection_pipeline.gui.ui_input(INPUT_AXIS_HORIZONTAL, -1)
+            detection_pipeline.gui.handle_input(INPUT_AXIS_HORIZONTAL, -1)
         elif key == ord("d"):
-            detection_pipeline.gui.ui_input(INPUT_AXIS_HORIZONTAL, 1)
+            detection_pipeline.gui.handle_input(INPUT_AXIS_HORIZONTAL, 1)
         elif key == ord("w"):
-            detection_pipeline.gui.ui_input(INPUT_AXIS_VERTICAL, -1)
+            detection_pipeline.gui.handle_input(INPUT_AXIS_VERTICAL, -1)
         elif key == ord("s"):
-            detection_pipeline.gui.ui_input(INPUT_AXIS_VERTICAL, 1)
+            detection_pipeline.gui.handle_input(INPUT_AXIS_VERTICAL, 1)
         elif key == ord("q"):
             break
         elif key == ord("\t"):

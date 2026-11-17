@@ -36,7 +36,7 @@ class BackgroundDetection:
 
         # Find contours
         contours, _ = cv2.findContours(frame_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5] # TODO Nötig?? Sortieren??s
         background_contour = None
         background_area = -1
         for contour in contours:
