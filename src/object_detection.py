@@ -18,8 +18,10 @@ class ObjectDetection:
 
         # Object detection for each color
         for object_color in OBJECT_COLORS:
-            color_mask_frame = self.create_color_mask(hsv_frame, object_color)
-            section.add_stage(f"Mask {object_color.name}", color_mask_frame)
+            mask_stage = section.add_stage(f"Mask {object_color.name}", hsv_frame)
+            sat_adjuster = mask_stage.add_adjuster(f"Sat {object_color.name}", 0, 50, 255, 5)
+            color_mask_frame = self.create_color_mask(hsv_frame, object_color, sat_adjuster.current)
+            mask_stage.frame = color_mask_frame
 
             # Find contours
             contours, _ = cv2.findContours(color_mask_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -123,7 +125,7 @@ class ObjectDetection:
 
         return object_attributes
 
-    def create_color_mask(self, hsv_frame, object_color):
+    def create_color_mask(self, hsv_frame, object_color, sat_value):
         hsv_range = object_color.hsv_range
         hsv_scond_range = object_color.hsv_second_range
         color_mask = cv2.inRange(hsv_frame, hsv_range.lower, hsv_range.upper)
@@ -132,7 +134,7 @@ class ObjectDetection:
             mask2 = cv2.inRange(hsv_frame, hsv_scond_range.lower, hsv_scond_range.upper)
             color_mask = cv2.bitwise_or(color_mask, mask2)
 
-        sat_mask = cv2.inRange(hsv_frame[:, :, 1], 50, 255) # TODO 0 -> make adjustable, saturation
+        sat_mask = cv2.inRange(hsv_frame[:, :, 1], sat_value, 255)
         color_mask = cv2.bitwise_and(color_mask, sat_mask)
 
         kernel_open = np.ones((5, 5), np.uint8)

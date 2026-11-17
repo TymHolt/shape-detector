@@ -38,6 +38,10 @@ def main():
             detection_pipeline.gui.handle_input(INPUT_AXIS_VERTICAL, -1)
         elif key == ord("s"):
             detection_pipeline.gui.handle_input(INPUT_AXIS_VERTICAL, 1)
+        elif key == ord("r"):
+            detection_pipeline.gui.handle_input(INPUT_AXIS_CONTROL, 1)
+        elif key == ord("f"):
+            detection_pipeline.gui.handle_input(INPUT_AXIS_CONTROL, -1)
         elif key == ord("q"):
             break
         elif key == ord("\t"):

@@ -4,11 +4,15 @@ def clamp_index(curr_value, min_value, max_value):
     return max(min_value, min(max_value, curr_value))
 
 class PipelineAdjuster:
-    def __init__(self, title, lower, initial, upper):
+    def __init__(self, title, lower, initial, upper, step):
         self.title = title
         self.lower = lower
         self.current = initial
         self.upper = upper
+        self.step = step
+
+    def clamp_current(self):
+        self.current = clamp_index(self.current, self.lower, self.upper)
 
 class PipelineStage:
     def __init__(self, title, frame):
@@ -16,15 +20,16 @@ class PipelineStage:
         self.frame = frame
         self.adjusters = []
 
-    def add_adjuster(self, title, lower, initial, upper):
+    def add_adjuster(self, title, lower, initial, upper, step):
         for adjuster in self.adjusters:
             if adjuster.title == title:
                 adjuster.lower = lower
                 adjuster.initial = initial
                 adjuster.upper = upper
+                adjuster.step = step
                 return adjuster
 
-        adjuster = PipelineAdjuster(title, lower, initial, upper)
+        adjuster = PipelineAdjuster(title, lower, initial, upper, step)
         self.adjusters.append(adjuster)
         return adjuster
 
@@ -53,6 +58,7 @@ VIEW_DEPTH_MAX = 2
 
 INPUT_AXIS_VERTICAL = 0
 INPUT_AXIS_HORIZONTAL = 1
+INPUT_AXIS_CONTROL = 3
 
 GUI_DARK = (0, 150, 0)
 GUI_LIGHT = (100, 255, 100)
@@ -135,13 +141,18 @@ class PipelineGui:
                 self.adjuster_index += direction
         elif axis == INPUT_AXIS_HORIZONTAL:
             self.view_depth += direction
+        elif axis == INPUT_AXIS_CONTROL:
+            if self.view_depth == VIEW_DEPTH_ADJUSTER:
+                current_adjuster = self.get_current_adjuster()
+                if current_adjuster != None:
+                    current_adjuster.current += current_adjuster.step * direction
+                    current_adjuster.clamp_current()
 
     def render(self, frame):
         current_section = self.get_current_section()
         current_stage = self.get_current_stage()
         current_adjuster = self.get_current_adjuster()
 
-        # TODO Curent adjuster == None
         if current_section == None or current_stage == None or not self.visible:
             return 
     
@@ -154,7 +165,7 @@ class PipelineGui:
                     text_color = GUI_LIGHT
                 cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
                 y += 30
-        else:
+        elif self.view_depth == VIEW_DEPTH_STAGE:
             cv2.putText(frame, f"< {current_section.title}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, GUI_DARK, 2, cv2.LINE_AA)           
             y = 60
             for stage in current_section.stages:
@@ -164,4 +175,15 @@ class PipelineGui:
                     text_color = GUI_LIGHT
                 cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
                 y += 30
+        elif self.view_depth == VIEW_DEPTH_ADJUSTER:
+            cv2.putText(frame, f"< {current_stage.title}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, GUI_DARK, 2, cv2.LINE_AA)           
+            y = 60
+            for adjuster in current_stage.adjusters:
+                text = f"{adjuster.title} {adjuster.current}"
+                text_color = GUI_DARK
+                if current_adjuster != None and adjuster.title == current_adjuster.title:
+                    text_color = GUI_LIGHT
+                cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, text_color, 2, cv2.LINE_AA)
+                y += 30
+                
 

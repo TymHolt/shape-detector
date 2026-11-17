@@ -33,5 +33,6 @@ python src/main.py
 - ```W``` -- Go up in UI selection
 - ```S``` -- Go down in UI selection
 - ```D``` -- Enter sub-menu
-- ```A``` -- Go back to main menu
-
+- ```A``` -- Go back to previous menu
+- ```R``` -- Increase control value
+- ```F``` -- Decrease control value
